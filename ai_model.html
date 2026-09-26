@@ -1,203 +1,61 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <title>AquaGrow AI Detection</title>
-
-    <!-- TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-
-    <!-- Teachable Machine -->
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-
-    <style>
-
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding-top: 30px;
-        }
-
-        #status {
-            font-size: 20px;
-        }
-
-    </style>
+    <title>AquaGrow Image Test</title>
 
 </head>
 
-
 <body>
 
-    <div id="status">
-        Loading AI Model...
-    </div>
-
+<div id="status">
+    Waiting for image...
+</div>
 
 <script>
 
-const MODEL_URL =
-"https://teachablemachine.withgoogle.com/models/ehIWPbKdh/";
-
-let model = null;
-
-
-// ======================================
-// LOAD MODEL
-// ======================================
-
-async function loadModel() {
-
-    try {
-
-        model = await tmImage.load(
-            MODEL_URL + "model.json",
-            MODEL_URL + "metadata.json"
-        );
-
-        document.getElementById("status").innerHTML =
-            "AI Model Ready";
-
-        if (window.AppInventor) {
-
-            window.AppInventor.setWebViewString(
-                "MODEL_READY"
-            );
-
-        }
-
-    } catch (error) {
-
-        document.getElementById("status").innerHTML =
-            "Model Error";
-
-        if (window.AppInventor) {
-
-            window.AppInventor.setWebViewString(
-                "MODEL_ERROR|" + error.message
-            );
-
-        }
-
-    }
-
-}
-
-
-// ======================================
-// RECEIVE IMAGE FROM MIT APP
-// ======================================
-function receiveImage(imageData) {
-
-    if (!model) {
-
-        if (window.AppInventor) {
-            window.AppInventor.setWebViewString(
-                "MODEL_NOT_READY"
-            );
-        }
-
-        return;
-    }
+function testImage(imagePath) {
 
     const img = new Image();
 
-    img.onload = async function() {
+    img.onload = function() {
 
-        try {
-
-            const prediction = await model.predict(img);
-
-            const healthyProbability =
-                prediction[0].probability;
-
-            const unhealthyProbability =
-                prediction[1].probability;
-
-            let condition;
-            let confidence;
-
-            if (healthyProbability >= unhealthyProbability) {
-
-                condition = "Healthy";
-                confidence = healthyProbability;
-
-            } else {
-
-                condition = "Unhealthy";
-                confidence = unhealthyProbability;
-
-            }
-
-            const confidencePercent =
-                Math.round(confidence * 100);
-
-            let recommendation;
-
-            if (condition === "Healthy") {
-
-                recommendation =
-                    "The plant appears healthy. Continue regular watering and monitoring.";
-
-            } else {
-
-                recommendation =
-                    "The plant may be unhealthy. Check the leaves, moisture level and plant condition.";
-
-            }
-
-            const result =
-                condition +
-                "|" +
-                confidencePercent +
-                "|" +
-                recommendation;
-
-            if (window.AppInventor) {
-
-                window.AppInventor.setWebViewString(result);
-
-            }
-
-        } catch (error) {
-
-            if (window.AppInventor) {
-
-                window.AppInventor.setWebViewString(
-                    "PREDICTION_ERROR|" + error.message
-                );
-
-            }
-
-        }
-
-    };
-
-    img.onerror = function() {
+        document.getElementById("status").innerHTML =
+            "IMAGE CAN BE READ";
 
         if (window.AppInventor) {
 
             window.AppInventor.setWebViewString(
-                "IMAGE_ERROR"
+                "IMAGE_CAN_BE_READ"
             );
 
         }
 
     };
 
-    img.src = imageData;
+
+    img.onerror = function() {
+
+        document.getElementById("status").innerHTML =
+            "IMAGE CANNOT BE READ";
+
+        if (window.AppInventor) {
+
+            window.AppInventor.setWebViewString(
+                "IMAGE_CANNOT_BE_READ"
+            );
+
+        }
+
+    };
+
+
+    img.src = imagePath;
 
 }
-
-
-// Start model
-
-loadModel();
 
 </script>
 
