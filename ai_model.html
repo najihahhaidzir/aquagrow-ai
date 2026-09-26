@@ -4,127 +4,162 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>AquaGrow AI Detection</title>
+    <title>AquaGrow AI</title>
 
-    <!-- TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 
-    <!-- Teachable Machine -->
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 40px;
+        }
+
+        #status {
+            font-size: 20px;
+        }
+    </style>
 </head>
 
 <body>
 
+    <div id="status">Loading AI model...</div>
+
 <script>
 
-    // ==========================================
-    // TEACHABLE MACHINE MODEL
-    // ==========================================
+const MODEL_URL =
+    "https://teachablemachine.withgoogle.com/models/ehIWPbKdh/";
 
-    const MODEL_URL =
-        "https://teachablemachine.withgoogle.com/models/ehIWPbKdh/";
-
-    let model = null;
+let model = null;
 
 
-    // ==========================================
-    // LOAD MODEL
-    // ==========================================
+// Load Teachable Machine model
+async function loadModel() {
 
-    async function loadModel() {
+    try {
+
+        model = await tmImage.load(
+            MODEL_URL + "model.json",
+            MODEL_URL + "metadata.json"
+        );
+
+        document.getElementById("status").innerHTML =
+            "AI Model Ready";
+
+        if (window.AppInventor) {
+            window.AppInventor.setWebViewString(
+                "MODEL_READY"
+            );
+        }
+
+    } catch (error) {
+
+        document.getElementById("status").innerHTML =
+            "Model Error";
+
+        if (window.AppInventor) {
+            window.AppInventor.setWebViewString(
+                "MODEL_ERROR|" + error.message
+            );
+        }
+    }
+}
+
+
+// Predict image
+async function predictImage(imageData) {
+
+    if (!model) {
+
+        if (window.AppInventor) {
+            window.AppInventor.setWebViewString(
+                "MODEL_NOT_READY"
+            );
+        }
+
+        return;
+    }
+
+    const img = new Image();
+
+    img.onload = async function() {
 
         try {
 
-            model = await tmImage.load(
-                MODEL_URL + "model.json",
-                MODEL_URL + "metadata.json"
-            );
+            const prediction =
+                await model.predict(img);
 
-            // Tell MIT App Inventor that model is ready
+            const healthyProbability =
+                prediction[0].probability;
+
+            const unhealthyProbability =
+                prediction[1].probability;
+
+            let condition;
+            let confidence;
+
+            if (healthyProbability >= unhealthyProbability) {
+
+                condition = "Healthy";
+                confidence = healthyProbability;
+
+            } else {
+
+                condition = "Unhealthy";
+                confidence = unhealthyProbability;
+            }
+
+            const confidencePercent =
+                Math.round(confidence * 100);
+
+            let recommendation;
+
+            if (condition === "Healthy") {
+
+                recommendation =
+                    "The plant appears healthy. Continue regular watering and monitoring.";
+
+            } else {
+
+                recommendation =
+                    "The plant may be unhealthy. Check the leaves, moisture level and plant condition.";
+            }
+
+            const result =
+                condition +
+                "|" +
+                confidencePercent +
+                "|" +
+                recommendation;
+
             if (window.AppInventor) {
-                window.AppInventor.setWebViewString("MODEL_READY");
+
+                window.AppInventor.setWebViewString(
+                    result
+                );
             }
 
         } catch (error) {
 
             if (window.AppInventor) {
+
                 window.AppInventor.setWebViewString(
-                    "MODEL_ERROR|" + error.message
+                    "PREDICTION_ERROR|" +
+                    error.message
                 );
             }
         }
-    }
+    };
+
+    img.src = imageData;
+}
 
 
-    // ==========================================
-    // PREDICT IMAGE
-    // ==========================================
+loadModel();
 
-    async function predictImage(imageData) {
+</script>
 
-        if (!model) {
-
-            if (window.AppInventor) {
-                window.AppInventor.setWebViewString(
-                    "MODEL_NOT_READY"
-                );
-            }
-
-            return;
-        }
-
-
-        const img = new Image();
-
-
-        img.onload = async function() {
-
-            try {
-
-                const prediction =
-                    await model.predict(img);
-
-
-                // Class 1 = Healthy
-                // Class 2 = Unhealthy
-
-                const healthyProbability =
-                    prediction[0].probability;
-
-                const unhealthyProbability =
-                    prediction[1].probability;
-
-
-                let condition;
-                let confidence;
-
-
-                // ==========================================
-                // DETERMINE RESULT
-                // ==========================================
-
-                if (healthyProbability >= unhealthyProbability) {
-
-                    condition = "Healthy";
-                    confidence = healthyProbability;
-
-                } else {
-
-                    condition = "Unhealthy";
-                    confidence = unhealthyProbability;
-                }
-
-
-                // ==========================================
-                // CONVERT CONFIDENCE TO %
-                // ==========================================
-
-                const confidencePercent =
-                    Math.round(confidence * 100);
-
-
-                // ==========================================
-                // RECOMMENDATION
-                // ==========================================
-
-                let recommendation;
+</body>
+</html>
