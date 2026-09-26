@@ -1,41 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>AquaGrow AI</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
+    <title>AquaGrow AI Detection</title>
+
+    <!-- TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 
+    <!-- Teachable Machine -->
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <style>
+
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding-top: 40px;
+            padding-top: 30px;
         }
 
         #status {
             font-size: 20px;
         }
+
     </style>
+
 </head>
+
 
 <body>
 
-    <div id="status">Loading AI model...</div>
+    <div id="status">
+        Loading AI Model...
+    </div>
+
 
 <script>
 
 const MODEL_URL =
-    "https://teachablemachine.withgoogle.com/models/ehIWPbKdh/";
+"https://teachablemachine.withgoogle.com/models/ehIWPbKdh/";
 
 let model = null;
 
 
-// Load Teachable Machine model
+// ======================================
+// LOAD MODEL
+// ======================================
+
 async function loadModel() {
 
     try {
@@ -49,9 +64,11 @@ async function loadModel() {
             "AI Model Ready";
 
         if (window.AppInventor) {
+
             window.AppInventor.setWebViewString(
                 "MODEL_READY"
             );
+
         }
 
     } catch (error) {
@@ -60,29 +77,41 @@ async function loadModel() {
             "Model Error";
 
         if (window.AppInventor) {
+
             window.AppInventor.setWebViewString(
                 "MODEL_ERROR|" + error.message
             );
+
         }
+
     }
+
 }
 
 
-// Predict image
-async function predictImage(imageData) {
+// ======================================
+// RECEIVE IMAGE FROM MIT APP
+// ======================================
+
+function receiveImage(imageData) {
 
     if (!model) {
 
         if (window.AppInventor) {
+
             window.AppInventor.setWebViewString(
                 "MODEL_NOT_READY"
             );
+
         }
 
         return;
+
     }
 
+
     const img = new Image();
+
 
     img.onload = async function() {
 
@@ -91,30 +120,48 @@ async function predictImage(imageData) {
             const prediction =
                 await model.predict(img);
 
+
+            // Class 1 = Healthy
+            // Class 2 = Unhealthy
+
             const healthyProbability =
                 prediction[0].probability;
 
             const unhealthyProbability =
                 prediction[1].probability;
 
+
             let condition;
             let confidence;
+
 
             if (healthyProbability >= unhealthyProbability) {
 
                 condition = "Healthy";
-                confidence = healthyProbability;
+
+                confidence =
+                    healthyProbability;
 
             } else {
 
                 condition = "Unhealthy";
-                confidence = unhealthyProbability;
+
+                confidence =
+                    unhealthyProbability;
+
             }
+
+
+            // Convert to percentage
 
             const confidencePercent =
                 Math.round(confidence * 100);
 
+
+            // Recommendation
+
             let recommendation;
+
 
             if (condition === "Healthy") {
 
@@ -125,7 +172,11 @@ async function predictImage(imageData) {
 
                 recommendation =
                     "The plant may be unhealthy. Check the leaves, moisture level and plant condition.";
+
             }
+
+
+            // Send result to MIT App Inventor
 
             const result =
                 condition +
@@ -134,12 +185,15 @@ async function predictImage(imageData) {
                 "|" +
                 recommendation;
 
+
             if (window.AppInventor) {
 
                 window.AppInventor.setWebViewString(
                     result
                 );
+
             }
+
 
         } catch (error) {
 
@@ -149,17 +203,25 @@ async function predictImage(imageData) {
                     "PREDICTION_ERROR|" +
                     error.message
                 );
+
             }
+
         }
+
     };
 
+
     img.src = imageData;
+
 }
 
+
+// Start model
 
 loadModel();
 
 </script>
 
 </body>
+
 </html>
