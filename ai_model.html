@@ -92,37 +92,26 @@ async function loadModel() {
 // ======================================
 // RECEIVE IMAGE FROM MIT APP
 // ======================================
-
 function receiveImage(imageData) {
 
     if (!model) {
 
         if (window.AppInventor) {
-
             window.AppInventor.setWebViewString(
                 "MODEL_NOT_READY"
             );
-
         }
 
         return;
-
     }
 
-
     const img = new Image();
-
 
     img.onload = async function() {
 
         try {
 
-            const prediction =
-                await model.predict(img);
-
-
-            // Class 1 = Healthy
-            // Class 2 = Unhealthy
+            const prediction = await model.predict(img);
 
             const healthyProbability =
                 prediction[0].probability;
@@ -130,38 +119,25 @@ function receiveImage(imageData) {
             const unhealthyProbability =
                 prediction[1].probability;
 
-
             let condition;
             let confidence;
-
 
             if (healthyProbability >= unhealthyProbability) {
 
                 condition = "Healthy";
-
-                confidence =
-                    healthyProbability;
+                confidence = healthyProbability;
 
             } else {
 
                 condition = "Unhealthy";
-
-                confidence =
-                    unhealthyProbability;
+                confidence = unhealthyProbability;
 
             }
-
-
-            // Convert to percentage
 
             const confidencePercent =
                 Math.round(confidence * 100);
 
-
-            // Recommendation
-
             let recommendation;
-
 
             if (condition === "Healthy") {
 
@@ -175,9 +151,6 @@ function receiveImage(imageData) {
 
             }
 
-
-            // Send result to MIT App Inventor
-
             const result =
                 condition +
                 "|" +
@@ -185,23 +158,18 @@ function receiveImage(imageData) {
                 "|" +
                 recommendation;
 
-
             if (window.AppInventor) {
 
-                window.AppInventor.setWebViewString(
-                    result
-                );
+                window.AppInventor.setWebViewString(result);
 
             }
-
 
         } catch (error) {
 
             if (window.AppInventor) {
 
                 window.AppInventor.setWebViewString(
-                    "PREDICTION_ERROR|" +
-                    error.message
+                    "PREDICTION_ERROR|" + error.message
                 );
 
             }
@@ -210,6 +178,17 @@ function receiveImage(imageData) {
 
     };
 
+    img.onerror = function() {
+
+        if (window.AppInventor) {
+
+            window.AppInventor.setWebViewString(
+                "IMAGE_ERROR"
+            );
+
+        }
+
+    };
 
     img.src = imageData;
 
