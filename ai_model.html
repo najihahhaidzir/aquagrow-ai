@@ -1,0 +1,133 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AquaGrow AI Detection</title>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+
+    <!-- Teachable Machine -->
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</head>
+
+<body>
+
+<script>
+
+    // ==========================================
+    // TEACHABLE MACHINE MODEL
+    // ==========================================
+
+    const MODEL_URL =
+        "https://teachablemachine.withgoogle.com/models/ehIWPbKdh/";
+
+    let model = null;
+
+
+    // ==========================================
+    // LOAD MODEL
+    // ==========================================
+
+    async function loadModel() {
+
+        try {
+
+            model = await tmImage.load(
+                MODEL_URL + "model.json",
+                MODEL_URL + "metadata.json"
+            );
+
+            // Tell MIT App Inventor that model is ready
+            if (window.AppInventor) {
+                window.AppInventor.setWebViewString("MODEL_READY");
+            }
+
+        } catch (error) {
+
+            if (window.AppInventor) {
+                window.AppInventor.setWebViewString(
+                    "MODEL_ERROR|" + error.message
+                );
+            }
+        }
+    }
+
+
+    // ==========================================
+    // PREDICT IMAGE
+    // ==========================================
+
+    async function predictImage(imageData) {
+
+        if (!model) {
+
+            if (window.AppInventor) {
+                window.AppInventor.setWebViewString(
+                    "MODEL_NOT_READY"
+                );
+            }
+
+            return;
+        }
+
+
+        const img = new Image();
+
+
+        img.onload = async function() {
+
+            try {
+
+                const prediction =
+                    await model.predict(img);
+
+
+                // Class 1 = Healthy
+                // Class 2 = Unhealthy
+
+                const healthyProbability =
+                    prediction[0].probability;
+
+                const unhealthyProbability =
+                    prediction[1].probability;
+
+
+                let condition;
+                let confidence;
+
+
+                // ==========================================
+                // DETERMINE RESULT
+                // ==========================================
+
+                if (healthyProbability >= unhealthyProbability) {
+
+                    condition = "Healthy";
+                    confidence = healthyProbability;
+
+                } else {
+
+                    condition = "Unhealthy";
+                    confidence = unhealthyProbability;
+                }
+
+
+                // ==========================================
+                // CONVERT CONFIDENCE TO %
+                // ==========================================
+
+                const confidencePercent =
+                    Math.round(confidence * 100);
+
+
+                // ==========================================
+                // RECOMMENDATION
+                // ==========================================
+
+                let recommendation;
+
+```
